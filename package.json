@@ -2,10 +2,10 @@
   "name": "edulink-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "./backend/server.js",
+  "main": "./server.js",
   "scripts": {
-    "dev": "nodemon ./backend/server.js",
-    "swagger": "node ./backend/swagger.js"
+    "dev": "nodemon server.js",
+    "swagger": "node swagger.js"
   },
   "keywords": [],
   "author": "",
