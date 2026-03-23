@@ -31,7 +31,11 @@ exports.createOpportunity = async (req, res) => {
 exports.getOpportunities = async (req, res) => {
   try {
      // #swagger.tags = ['Opportunities']
-    const opportunities = await Opportunity.find();
+    const userId= req.user ? req.user.id : null;
+    const opportunities = await Opportunity.find(
+      //exclude opportunities posted by the current user
+      userId ? { postedBy: { $ne: userId } } : {}
+    );
     res.json(opportunities);
   } catch (error) {
     res.status(500).json(error);
