@@ -7,7 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require('./swaggerDocs.json');
 
 const app = express();
-
+console.log("connection string is", process.env.MONGO_URI);
 // Connect DB
 connectDB();
 
