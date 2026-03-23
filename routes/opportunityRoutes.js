@@ -7,7 +7,7 @@ const {
 
 const authMiddleware = require("../middleware/authMiddleware");
 
-router.get("/opportunities", getOpportunities);
+router.get("/opportunities",authMiddleware, getOpportunities);
 router.post("/opportunities", authMiddleware, createOpportunity);
 
 module.exports = router;
