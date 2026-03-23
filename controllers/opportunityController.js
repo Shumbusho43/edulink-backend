@@ -41,3 +41,13 @@ exports.getOpportunities = async (req, res) => {
     res.status(500).json(error);
   }
 };
+//get opportunities posted by the current user
+exports.getMyOpportunities = async (req, res) => {
+  try {
+     // #swagger.tags = ['Opportunities']
+    const opportunities = await Opportunity.find({ postedBy: req.user.id });
+    res.json(opportunities);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
