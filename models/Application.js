@@ -19,6 +19,10 @@ const applicationSchema = new mongoose.Schema({
   appliedAt: {
     type: Date,
     default: Date.now
+  },
+  rejectionReason: {
+    type: String,
+    default: ""
   }
 }, { timestamps: true });
 

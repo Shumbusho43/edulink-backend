@@ -36,8 +36,29 @@ exports.getOpportunities = async (req, res) => {
     const opportunities = await Opportunity.find(
       //exclude opportunities posted by the current user
       userId ? { postedBy: { $ne: userId } } : {}
-    );
-    res.json(opportunities);
+    )
+      .populate("postedBy", "name email role")
+      .lean();
+
+    const opportunityIds = opportunities.map(opportunity => opportunity._id);
+    const applications = await Application.find({ opportunity: { $in: opportunityIds } })
+      .populate("user", "name email role")
+      .lean();
+
+    const applicationsByOpportunity = applications.reduce((acc, application) => {
+      const opportunityId = application.opportunity.toString();
+      if (!acc[opportunityId]) {
+        acc[opportunityId] = [];
+      }
+      acc[opportunityId].push(application);
+      return acc;
+    }, {});
+
+    const opportunitiesWithApplications = opportunities.map(opportunity => ({
+      ...opportunity,
+      applications: applicationsByOpportunity[opportunity._id.toString()] || []
+    }));
+    res.json(opportunitiesWithApplications);
   } catch (error) {
     res.status(500).json(error);
   }
@@ -56,7 +77,6 @@ exports.getMyOpportunities = async (req, res) => {
 exports.getOpportunityApplications = async (req, res) => {
   try {
      // #swagger.tags = ['Opportunities']
-     console.log("called");
      
     const opportunityId = req.params.id;
     const applications = await Application.find({ opportunity: opportunityId })
@@ -66,5 +86,66 @@ exports.getOpportunityApplications = async (req, res) => {
     console.log(error);
     
     res.status(500).json(error);
+  }
+};
+
+exports.getUserOpportunityStats = async (req, res) => {
+  try {
+      // #swagger.tags = ['Statistics']
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    let opportunityFilter = {};
+    let applicationFilter = {};
+    
+    // Role-based filtering
+    if (role === "user") {
+      opportunityFilter = { postedBy: userId };
+    }
+
+    // Count opportunities
+    const totalOpportunities = await Opportunity.countDocuments(opportunityFilter);
+
+    if (role === "user") {
+      const postedOpportunityIds = await Opportunity.find(opportunityFilter).distinct("_id");
+      applicationFilter = { opportunity: { $in: postedOpportunityIds } };
+    }
+    
+    // Aggregate application stats in ONE query
+    const applicationStats = await Application.aggregate([
+      { $match: applicationFilter },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Default values
+    let totalApplications = 0;
+    let pendingApplications = 0;
+    let approvedApplications = 0;
+    let rejectedApplications = 0;
+
+    // Map results
+    applicationStats.forEach(stat => {
+      const status = stat._id;
+      totalApplications += stat.count;
+      if (status === "Pending") pendingApplications = stat.count;
+      if (status === "Accepted") approvedApplications = stat.count;
+      if (status === "Rejected") rejectedApplications = stat.count;
+    });
+
+    res.json({
+      totalOpportunities,
+      totalApplications,
+      pendingApplications,
+      approvedApplications,
+      rejectedApplications
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
   }
 };
