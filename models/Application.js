@@ -11,6 +11,23 @@ const applicationSchema = new mongoose.Schema({
     ref: "Opportunity",
     required: true
   },
+  coverLetter: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  resumeUrl: {
+    type: String,
+    default: ""
+  },
+  cvFile: {
+    type: String,
+    default: ""
+  },
+  screeningAnswers: {
+    type: [String],
+    default: []
+  },
   status: {
     type: String,
     enum: ["Pending", "Accepted", "Rejected"],
@@ -25,5 +42,9 @@ const applicationSchema = new mongoose.Schema({
     default: ""
   }
 }, { timestamps: true });
+
+applicationSchema.path("resumeUrl").validate(function resumeOrCvValidator(value) {
+  return Boolean((value && value.trim()) || (this.cvFile && this.cvFile.trim()));
+}, "Provide either resumeUrl or cvFile");
 
 module.exports = mongoose.model("Application", applicationSchema);

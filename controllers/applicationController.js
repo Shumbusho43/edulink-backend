@@ -1,11 +1,42 @@
 const Application = require("../models/Application");
+const Opportunity = require("../models/Opportunity");
 
 // Apply to opportunity
 exports.applyToOpportunity = async (req, res) => {
   try {
-        // #swagger.tags = ['Applications']
+    // #swagger.tags = ['Applications']
     const userId = req.user.id;
-    const { opportunityId } = req.body;
+    const {
+      opportunityId,
+      coverLetter,
+      resumeUrl,
+      cvFile
+    } = req.body;
+
+    if (!opportunityId) {
+      return res.status(400).json({ message: "opportunityId is required" });
+    }
+
+    if (!coverLetter || !coverLetter.trim()) {
+      return res.status(400).json({ message: "coverLetter is required" });
+    }
+
+    if (!resumeUrl && !cvFile) {
+      return res.status(400).json({ message: "Provide either resumeUrl or cvFile" });
+    }
+    const opportunity = await Opportunity.findById(opportunityId).select("postedBy deadline");
+
+    if (!opportunity) {
+      return res.status(404).json({ message: "Opportunity not found" });
+    }
+
+    if (opportunity.postedBy && opportunity.postedBy.toString() === userId.toString()) {
+      return res.status(400).json({ message: "You cannot apply to your own opportunity" });
+    }
+
+    if (opportunity.deadline && new Date(opportunity.deadline) < new Date()) {
+      return res.status(400).json({ message: "Application deadline has passed" });
+    }
 
     // Check if already applied
     const existing = await Application.findOne({
@@ -19,24 +50,28 @@ exports.applyToOpportunity = async (req, res) => {
 
     const application = await Application.create({
       user: userId,
-      opportunity: opportunityId
+      opportunity: opportunityId,
+      coverLetter: coverLetter.trim(),
+      resumeUrl: resumeUrl || "",
+      cvFile: cvFile || ""
     });
 
     res.status(201).json(application);
   } catch (error) {
+     console.log(error);
     res.status(500).json(error);
   }
 };
 
 // Get user's applications
 exports.getMyApplications = async (req, res) => {
-   // #swagger.tags = ['Applications']
+  // #swagger.tags = ['Applications']
   try {
     const apps = await Application.find({ user: req.user.id })
       .populate("opportunity");
 
     res.json(apps);
-  } catch (error) {
+  } catch (error) {    
     res.status(500).json(error);
   }
 };
