@@ -27,7 +27,7 @@ jobs:
       run: npm ci
 
     - name: Lint / sanity check
-      run: node -c app.js
+      run: node -c server.js
 
     - name: Start app (smoke test)
       env:
@@ -35,7 +35,7 @@ jobs:
         MONGO_URI: ${{ secrets.MONGO_URI }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
       run: |
-        timeout 10s node app.js || [ $? -eq 124 ]
+        timeout 10s node server.js || [ $? -eq 124 ]
 
   docker:
     name: Build & Push Docker Image
