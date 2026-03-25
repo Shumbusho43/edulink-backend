@@ -1,6 +1,6 @@
 const swaggerAutogen = require('swagger-autogen')()
 const outputFile = './swaggerDocs.json'
-const endpointsFiles = ['./routes/authRoutes', './routes/opportunityRoutes']
+const endpointsFiles = ['./routes/authRoutes', './routes/opportunityRoutes', './routes/applicationRoutes']
 const doc = {
   info: {
     version: "1.0.0",

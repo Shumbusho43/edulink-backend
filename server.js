@@ -19,6 +19,7 @@ app.use("/api/documentation", swaggerUi.serve, swaggerUi.setup(swaggerFile, fals
 // Routes
 app.use("/api", require("./routes/authRoutes"));
 app.use("/api", require("./routes/opportunityRoutes"));
+app.use("/api", require("./routes/applicationRoutes"));
 
 app.get("/", (req, res) => {
   res.send("EduLink API Running");
